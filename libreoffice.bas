@@ -1,8 +1,11 @@
-﻿REM  *****  BASIC  *****
+REM  *****  BASIC  *****
 
 Sub Main
 	dim doc as Object 
 	dim sheet as Object
+	
+	filas 	   = 12 ' cantidad filas antes del footer
+	filaFooter = filas + 1
 	
 	doc 		= ThisComponent
 	sheet 		= doc.sheets(0)
@@ -29,14 +32,14 @@ Sub Main
 	columnas.getByIndex(4).isTextWrapped = true
 	
 	' Alineación
-	rangoFooter = sheet.getCellRangeByName("A5:E5")
+	rangoFooter = sheet.getCellRangeByName("A" & filaFooter & ":E" & filaFooter)
 	rangoFooter.cellBackColor 	= colorPrimario
 	rangoFooter.charColor 		= colorTextPrimario
 	rangoFooter.charWeight 		= com.sun.star.awt.FontWeight.BOLD 
-	sheet.getCellRangeByName("A5:C5").horiJustify = com.sun.star.table.CellHoriJustify.RIGHT
+	sheet.getCellRangeByName("A" & filaFooter & ":C" & filaFooter).horiJustify = com.sun.star.table.CellHoriJustify.RIGHT
 	
 	' Reemplazo de texto	
-	for i = 2 to 11
+	for i = 2 to filas
 		celda = sheet.getCellByPosition(4, i)
 		texto = celda.getString()
 		textoMod = replace(texto, "- ", Chr(13)&"- ")
