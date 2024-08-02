@@ -1,3 +1,57 @@
+REM  *****  BASIC  *****
+
+Sub Main
+	dim doc as Object 
+	dim sheet as Object
+	
+	filas 	   = 18 ' cantidad filas antes del footer
+	filaFooter = filas + 1
+	
+	doc 		= ThisComponent
+	sheet 		= doc.sheets(0)
+	columnas 	= sheet.getColumns()
+	
+	colorPrimario = RGB(7, 25, 82)
+	colorTextPrimario = RGB(255, 255, 255)
+	
+		
+	range = sheet.getCellRangeByName("A1:E1")
+	range.cellBackColor = colorPrimario ' color de fondo
+	range.charColor 	= colorTextPrimario ' color de texto
+	range.charWeight 	= com.sun.star.awt.FontWeight.BOLD 
+	
+	' tamaño de columnas
+	columnas.getByIndex(0).width = 500
+	columnas.getByIndex(1).width = 15000
+	columnas.getByIndex(2).width = 900
+	columnas.getByIndex(3).width = 900
+	columnas.getByIndex(4).width = 15000
+	
+	' Ajuste de texto
+	columnas.getByIndex(1).isTextWrapped = true
+	columnas.getByIndex(4).isTextWrapped = true
+	
+	' Alineación
+	rangoFooter = sheet.getCellRangeByName("A" & filaFooter & ":E" & filaFooter)
+	rangoFooter.cellBackColor 	= colorPrimario
+	rangoFooter.charColor 		= colorTextPrimario
+	rangoFooter.charWeight 		= com.sun.star.awt.FontWeight.BOLD 
+	sheet.getCellRangeByName("A" & filaFooter & ":C" & filaFooter).horiJustify = com.sun.star.table.CellHoriJustify.RIGHT
+	
+	' Reemplazo de texto	
+	for i = 2 to filas
+		celda = sheet.getCellByPosition(4, i)
+		texto = celda.getString()
+		textoMod = replace(texto, "- ", Chr(13)&"- ")
+		celda.setString(textoMod)
+	next i
+End Sub
+
+Sub Prueba
+	n = NotaFinal(7, 7, 7, 0, 7, 7, 7)
+	MsgBox "La Nota es " & n
+End Sub
+
 Function NotaFinal(p1, p2, p3, f1, f2, f3, examen) As Double
 	' Pruebas
 	nota = nota + p1 * 0.15
@@ -60,6 +114,86 @@ Sub GenerarInformes
 	Informe("INFORME P3", 16, filaInicioPegar)
 	Informe("INFORME EXAMEN y EX REP", 17, filaInicioPegar)
 	Informe("BBDD NOTA FINAL", 6, 3)
+	ActaFinal()
+End Sub
+
+Sub ActaFinal
+	oSheetData = ThisComponent.Sheets.getByName("Data")
+	oCursor = oSheetData.createCursorByRange(oSheetData.getCellRangeByName("B2"))
+    oCursor.gotoEndOfUsedArea(False)    
+    lastRow = oCursor.RangeAddress.EndRow
+    firstRow = 1 ' 0 indexed --> 1 == 2
+    rows = lastRow - firstRow + 1
+    
+	Dim notasFinales(0 To rows-1, 0 To 0) as Double 
+	Dim notasExamenes(0 To rows-1, 0 To 0) as Double 
+	Dim notas1(0 To rows-1, 0 To 0) as Double 
+	Dim notas2(0 To rows-1, 0 To 0) as Double 
+	Dim notas3(0 To rows-1, 0 To 0) as Double 
+	
+	Dim nombres(0 To rows-1, 0 To 0) as String
+	Dim ruts(0 To rows-1, 0 To 0) as String
+	
+	For i = 0 To rows-1		
+		colP1 = 14
+		colP2 = 15
+		colP3 = 16
+		colEx = 17
+		colF1 = 8
+		colF2 = 10
+		colF3 = 12
+		p1 = NotaChilena( oSheetData.getCellByPosition(colP1, i+1 ).getValue() )
+		p2 = NotaChilena( oSheetData.getCellByPosition(colP2, i+1 ).getValue() )
+		p3 = NotaChilena( oSheetData.getCellByPosition(colP3, i+1 ).getValue() )
+		examen = NotaChilena( oSheetData.getCellByPosition(colEx, i+1 ).getValue() )
+		f1 = oSheetData.getCellByPosition(colF1, i+1 ).getValue()
+		f2 = oSheetData.getCellByPosition(colF2, i+1 ).getValue()
+		f3 = oSheetData.getCellByPosition(colF3, i+1 ).getValue()
+		notasFinales(i, 0) = NotaFinal(p1, p2, p3, f1, f2, f3, examen)
+		notasExamenes(i, 0) = examen
+		notas1(i, 0) = p1
+		notas2(i, 0) = p2
+		notas3(i, 0) = p3
+		' ==========================================================
+		nombre 		= oSheetData.getCellByPosition(1, i+1 ).getString() ' col B = 1
+		apellido 	= oSheetData.getCellByPosition(0, i+1 ).getString() ' col A = 0
+		nombreCompleto = nombre & " " & apellido
+		nombres(i, 0) = nombreCompleto
+		' ==========================================================		
+		ruts(i, 0) = oSheetData.getCellByPosition(3, i+1).getString()
+	Next i
+	
+	acta = ThisComponent.Sheets.getByName("ACTA FINAL")
+	actaFirstRow = 8
+	actaLastRow = actaFirstRow + rows - 1
+	
+    colB = 1 ' nombreCompleto
+    oCellRangeDest = acta.getCellRangeByPosition(colB, actaFirstRow, colB, actaLastRow)
+    oCellRangeDest.setDataArray( nombres )  
+
+	colA = 0 ' RUT
+    oCellRangeDest = acta.getCellRangeByPosition(colA, actaFirstRow, colA, actaLastRow)
+    oCellRangeDest.setDataArray( ruts )
+    
+    colC = 2 ' p1
+    oCellRangeDest = acta.getCellRangeByPosition(colC, actaFirstRow, colC, actaLastRow)
+    oCellRangeDest.setDataArray( notas1 )
+    
+    colD = 3 ' p2
+    oCellRangeDest = acta.getCellRangeByPosition(colD, actaFirstRow, colD, actaLastRow)
+    oCellRangeDest.setDataArray( notas2 )
+    
+    colE = 4 ' p3
+    oCellRangeDest = acta.getCellRangeByPosition(colE, actaFirstRow, colE, actaLastRow)
+    oCellRangeDest.setDataArray( notas3 )
+    
+    colF = 5 ' examen
+    oCellRangeDest = acta.getCellRangeByPosition(colF, actaFirstRow, colF, actaLastRow)
+    oCellRangeDest.setDataArray( notasExamenes )
+    
+    colG = 6 ' notaFinal
+	oCellRangeDest = acta.getCellRangeByPosition(colG, actaFirstRow, colG, actaLastRow)
+    oCellRangeDest.setDataArray( notasFinales )
 End Sub
 
 Sub Informe(nombreHojaInforme as String, colNota as Long, filaInicioPegar as Long)
