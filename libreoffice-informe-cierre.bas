@@ -1,10 +1,10 @@
 REM  *****  BASIC  *****
 
-Sub Main
+Sub FormatoPauta
 	dim doc as Object 
 	dim sheet as Object
 	
-	filas 	   = 18 ' cantidad filas antes del footer
+	filas 	   = 23 ' cantidad filas antes del footer
 	filaFooter = filas + 1
 	
 	doc 		= ThisComponent
@@ -13,8 +13,7 @@ Sub Main
 	
 	colorPrimario = RGB(7, 25, 82)
 	colorTextPrimario = RGB(255, 255, 255)
-	
-		
+			
 	range = sheet.getCellRangeByName("A1:E1")
 	range.cellBackColor = colorPrimario ' color de fondo
 	range.charColor 	= colorTextPrimario ' color de texto
@@ -47,10 +46,55 @@ Sub Main
 	next i
 End Sub
 
-Sub Prueba
-	n = NotaFinal(7, 7, 7, 0, 7, 7, 7)
-	MsgBox "La Nota es " & n
+
+Dim ColDataPrueba1Porcentaje As Integer 
+Dim ColDataPrueba2Porcentaje As Integer
+Dim ColDataPrueba3Porcentaje As Integer
+
+Dim ColDataExamenPorcentaje As Integer
+Dim ColDataNotaFinal As Integer
+
+Dim ColDataForo1Nota As Integer
+Dim ColDataForo2Nota As Integer
+Dim ColDataForo3Nota As Integer
+
+Sub InicializarVariablesInformeCierre
+	' Pruebas
+	ColDataPrueba1Porcentaje = ColumnaALetra("O")
+	ColDataPrueba2Porcentaje = ColumnaALetra("P")
+	ColDataPrueba3Porcentaje = ColumnaALetra("Q")
+	' Examen
+	ColDataExamenPorcentaje =  ColumnaALetra("R")
+	' Nota final
+	ColDataNotaFinal =  ColumnaALetra("G")
+	' Foros
+	ColDataForo1Nota = ColumnaALetra("I")
+	ColDataForo2Nota = ColumnaALetra("K")
+	ColDataForo3Nota = ColumnaALetra("M")
+	
 End Sub
+
+Sub Prueba
+	'n = NotaFinal(7, 7, 7, 0, 7, 7, 7)
+	'MsgBox "La Nota es " & n
+	l = ColumnaALetra("Y")
+	MsgBox "El número es " & l
+End Sub
+
+Function ColumnaALetra(letraColumna As String) As Integer
+    Dim i As Integer
+    Dim columnaNum As Integer
+    Dim longitud As Integer
+    
+    longitud = Len(letraColumna)
+    columnaNum = 0
+    
+    For i = 1 To longitud
+        columnaNum = columnaNum * 26 + (Asc(UCase(Mid(letraColumna, i, 1))) - Asc("A") + 1)
+    Next i
+    
+    ColumnaALetra = columnaNum - 1
+End Function
 
 Function NotaFinal(p1, p2, p3, f1, f2, f3, examen) As Double
 	' Pruebas
@@ -108,16 +152,24 @@ Function NotaChilena(puntajeObtenido As Double) As Double
 End Function
 
 Sub GenerarInformes
+	InicializarVariablesInformeCierre()
+	
+	'Dim ColDataPrueba1Porcentaje As Integer 	
+	'Dim ColDataForo1Nota As Integer	
+
 	filaInicioPegar = 23
-	Informe("INFORME P1", 14, filaInicioPegar)
-	Informe("INFORME P2", 15, filaInicioPegar)
-	Informe("INFORME P3", 16, filaInicioPegar)
-	Informe("INFORME EXAMEN y EX REP", 17, filaInicioPegar)
-	Informe("BBDD NOTA FINAL", 6, 3)
+	' Informe(hoja, columna, filaInicioPegar)
+	Informe("INFORME P1", ColDataPrueba1Porcentaje, filaInicioPegar)
+	Informe("INFORME P2", ColDataPrueba2Porcentaje, filaInicioPegar)
+	Informe("INFORME P3", ColDataPrueba3Porcentaje, filaInicioPegar)
+	Informe("INFORME EXAMEN y EX REP", ColDataExamenPorcentaje, filaInicioPegar)
+	Informe("BBDD NOTA FINAL", ColDataNotaFinal, 3)
 	ActaFinal()
 End Sub
 
 Sub ActaFinal
+	InicializarVariablesInformeCierre()
+	
 	oSheetData = ThisComponent.Sheets.getByName("Data")
 	oCursor = oSheetData.createCursorByRange(oSheetData.getCellRangeByName("B2"))
     oCursor.gotoEndOfUsedArea(False)    
@@ -135,13 +187,14 @@ Sub ActaFinal
 	Dim ruts(0 To rows-1, 0 To 0) as String
 	
 	For i = 0 To rows-1		
-		colP1 = 14
-		colP2 = 15
-		colP3 = 16
-		colEx = 17
-		colF1 = 8
-		colF2 = 10
-		colF3 = 12
+		colP1 = ColDataPrueba1Porcentaje
+		colP2 = ColDataPrueba2Porcentaje
+		colP3 = ColDataPrueba3Porcentaje
+		colEx = ColDataExamenPorcentaje
+		colF1 = ColDataForo1Nota
+		colF2 = ColDataForo2Nota
+		colF3 = ColDataForo3Nota
+		
 		p1 = NotaChilena( oSheetData.getCellByPosition(colP1, i+1 ).getValue() )
 		p2 = NotaChilena( oSheetData.getCellByPosition(colP2, i+1 ).getValue() )
 		p3 = NotaChilena( oSheetData.getCellByPosition(colP3, i+1 ).getValue() )
